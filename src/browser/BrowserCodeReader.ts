@@ -267,9 +267,9 @@ export class BrowserCodeReader {
     constraints: MediaStreamConstraints,
     videoSource?: string | HTMLVideoElement
   ): Promise<Result> {
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-    return await this.decodeOnceFromStream(stream, videoSource);
+    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    console.log('hell')
+    return await this.decodeOnceFromStream(videoSource);
   }
 
   /**
@@ -282,12 +282,11 @@ export class BrowserCodeReader {
    * @memberOf BrowserCodeReader
    */
   public async decodeOnceFromStream(
-    stream: MediaStream,
     videoSource?: string | HTMLVideoElement
   ): Promise<Result> {
     this.reset();
 
-    const video = await this.attachStreamToVideo(stream, videoSource);
+    const video = await this.attachStreamToVideo(videoSource);
     const result = await this.decodeOnce(video);
 
     return result;
@@ -359,7 +358,7 @@ export class BrowserCodeReader {
   ): Promise<void> {
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-    return await this.decodeFromStream(stream, videoSource, callbackFn);
+    return await this.decodeFromStream(videoSource, callbackFn);
   }
 
   /**
@@ -372,13 +371,12 @@ export class BrowserCodeReader {
    * @memberOf BrowserCodeReader
    */
   public async decodeFromStream(
-    stream: MediaStream,
     videoSource: string | HTMLVideoElement,
     callbackFn: DecodeContinuouslyCallback
   ) {
     this.reset();
 
-    const video = await this.attachStreamToVideo(stream, videoSource);
+    const video = await this.attachStreamToVideo(videoSource);
 
     return await this.decodeContinuously(video, callbackFn);
   }
@@ -404,15 +402,13 @@ export class BrowserCodeReader {
    * @param decodeFn A callback for the decode method.
    */
   protected async attachStreamToVideo(
-    stream: MediaStream,
     videoSource: string | HTMLVideoElement
   ): Promise<HTMLVideoElement> {
     const videoElement = this.prepareVideoElement(videoSource);
 
-    this.addVideoSource(videoElement, stream);
+    this.addVideoSource(videoElement);
 
     this.videoElement = videoElement;
-    this.stream = stream;
 
     await this.playVideoOnLoadAsync(videoElement);
 
@@ -1180,13 +1176,12 @@ export class BrowserCodeReader {
    * @param stream
    */
   public addVideoSource(
-    videoElement: HTMLVideoElement,
-    stream: MediaStream
+    videoElement: HTMLVideoElement
   ): void {
     // Older browsers may not have `srcObject`
     try {
       // @note Throws Exception if interrupted by a new loaded request
-      videoElement.srcObject = stream;
+      videoElement.srcObject = this.stream;
     } catch (err) {
       // @note Avoid using this in new browsers, as it is going away.
       // @ts-ignore
